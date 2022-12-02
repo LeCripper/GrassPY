@@ -1,0 +1,370 @@
+command /grasspy [<text>] [<text>]:
+	permission: op
+	trigger:
+		if arg-1 is set:
+			if arg-1 is "reload":
+				if arg-2 is set:
+					set {_content::*} to file contents of "plugins/grassPy/%arg-2%"
+					set {_line} to 0
+					set {_looptime} to 0
+					send "&f&l&m                          " to player
+					send "&6Reloading & parsing your code."
+					loop {_content::*}:
+						if loop-value starts with "$":
+							set {_breakpoint} to true
+					if {_breakpoint} is not set:
+						send " " to player
+						loop {_content::*}:
+							add 1 to {_line}
+							add 1 to {_looptime}
+							if loop-value starts with "print(""":
+								set {_print} to loop-value
+								replace all "print(""" with "" in {_print}
+								replace all """)" with "" in {_print}
+								send "&8| &f%colored {_print}%" to player
+							else if loop-value starts with "print(":
+								set {_check::*} to loop-value split at ""
+								if {_check::7} is "f":
+									set {_print} to loop-value
+									replace all "print(f""" with "" in {_print}
+									replace all """)" with "" in {_print}
+									if {_print} contains "{":
+										set {_l} to 0
+										set {_getvar::*} to {_print} split at ""
+										loop {_getvar::*}:
+											add 1 to {_l}
+											if loop-value-2 is "{":
+												if {_getvar::%{_l}+2%} is not "}":
+													set {_var} to "%{_getvar::%{_l}+1%}%%{_getvar::%{_l}+2%}%"
+													if {_getvar::%{_l}+3%} is not "}":
+														set {_var} to "%{_getvar::%{_l}+1%}%%{_getvar::%{_l}+2%}%%{_getvar::%{_l}+3%}%"
+														replace all "{%{_var}%}" with "%{%{_var}%}%" in {_print}
+												else if {_getvar::%{_l}+2%} is "}":
+													set {_var} to "%{_getvar::%{_l}+1%}%"
+													replace all "{%{_var}%}" with "%{%{_var}%}%" in {_print}
+									replace all "<none>" with "&c🜁&r" in {_print}
+									send "&8| &f%colored {_print}%" to player
+								{_check::7} isn't "f"
+								set {_lv} to loop-value
+								replace all "print(" with "" in {_lv}
+								replace all ")" with "" in {_lv}
+								if loop-value contains "+":
+									set {_parser::*} to {_lv} split at "+"
+									set {_result} to {_parser::1} parsed as a number + {_parser::2} parsed as a number
+								else if loop-value contains "-":
+									set {_parser::*} to {_lv} split at "-"
+									set {_result} to {_parser::1} parsed as a number - {_parser::2} parsed as a number
+								else if loop-value contains "*" or "x":
+									set {_parser::*} to {_lv} split at "*" or "x"
+									set {_result} to {_parser::1} parsed as a number * {_parser::2} parsed as a number
+								replace all "<none>" with "&c🜁&r" in {_print}
+								send "&8| &f%{_result}%" to player
+							else if loop-value starts with "valueof":
+								set {_thevar} to loop-value
+								set {_thevar::*} to {_thevar} split at ""
+								set {_thevar} to "%{_thevar::9}%%{_thevar::10}%%{_thevar::11}%"
+								if {_thevar::13} is "=":
+									{_thevar::15} is """"
+									set {_check} to 16
+									set {_thevalue} to ""
+									loop 37 times:
+										{_thevar::%{_check}%} is set
+										if {_thevar::%{_check}%} is not """":
+											set {_thevalue} to "%{_thevalue}%%{_thevar::%{_check}%}%"
+											add 1 to {_check}
+									replace all "<none>" with "&c✨" in {_thevalue}
+									if {_thevalue} is {%{_thevar}%}:
+										set {_ogcode} to loop-value
+										replace all "valueof %{_thevar}% = ""%{_thevalue}%""" with "" in {_ogcode}
+										if {_ogcode} doesn't start with " sleep":
+											set {CustomParserAccess::%player%} to true
+											make player execute "grasspy virtual_function %{_ogcode}%"
+											delete {CustomParserAccess::%player%}
+										else:
+											set {_sleep::*} to {_ogcode} split at "("	
+											set {_amount} to {_sleep::2}
+											replace all ")" with "" in {_amount}
+											add 1 to {_Waiting} 
+											send "&e☄ &fWaiting &e%{_amount}% &fseconds..." to player
+											wait "%{_amount}% seconds" parsed as timespan
+									else:
+										send "&c❌ &fThe value of &e%{_thevar}% &fis not &6""&e%{_thevalue}%&6"" &7&o(in line %{_line}%)" to player
+							else if loop-value starts with "hand":
+								set {_thevar} to loop-value
+								replace all "hand(" and ")" with "" in {_thevar}
+								set {_amount::*} to {_thevar} split at " "
+								send "&e⌚ &fGave &e%{_amount::2}%x %uppercase {_amount::1}% &fto PLAYER"
+								give player {_amount::2} parsed as a number of {_amount::1} parsed as an item
+								wait 1 tick
+								if player doesn't have {_amount::1}:
+									send "&cCant understand %uppercase {_amount::1}% at line %{_line}%" to player
+									loop all blocks:
+										{_solved} is not set
+										set {_n} to loop-block 
+										set {_n} to "%{_n}%"
+										if first character of {_n} is "%first character of {_amount::1}%":
+											set {_solved} to true
+											replace all " " with "_" in {_n}
+											send "&6Did you mean: &f%uppercase {_n}%" to player
+									if {_solved} is not set:
+										loop all items:
+											{_solved} is not set
+											set {_n} to loop-item
+											set {_n} to "%{_n}%"
+											if first character of {_n} is "%first character of {_amount::1}%":
+												set {_solved} to true
+												replace all " " with "_" in {_n}
+												send "&6Did you mean: &f%uppercase {_n}%" to player
+								else:
+									send "&e⌚ &fGave &e%{_amount::2}%x %uppercase {_amount::1}% &fto PLAYER"
+							else if loop-value starts with "sleep":
+								set {_amnt} to 0
+								set {_cont} to true
+								loop 5 times:
+									{_cont} is set
+									if {_content::%{_line}-{_amnt}%} starts with "from":
+										set {_stop} to true
+										set {_cont} to true
+									add 1 to {_amnt}
+								{_stop} isn't set
+								set {_sleep::*} to loop-value split at "("
+								set {_amount} to {_sleep::2}
+								replace all ")" with "" in {_amount}
+								add 1 to {_Waiting} 
+								send "&e☄ &fWaiting &e%{_amount}% &fseconds..." to player
+								wait "%{_amount}% seconds" parsed as timespan
+							else if loop-value starts with "from":
+								set {_code::*} to loop-value split at " "
+								set {_sound} to {_code::2}
+								replace all """" with "" in {_sound}
+								if {_code::3} is "{":
+									set {_cont} to true
+									set {_amnt} to 1
+									loop 5 times:
+										{_cont} is set
+										if {_content::%{_line}+{_amnt}%} starts with "  play":
+											replace all "  " with "" in {_content::%{_line}+{_amnt}%}
+											set {_tl::*} to {_content::%{_line}+{_amnt}%} split at " "
+											set {_thesound} to {_tl::2}
+											replace all """" with "" in {_thesound}
+											play sound "%{_sound}%.%{_thesound}%" to player
+											send "&d♫ &fPlaying: &6%uppercase {_sound}%.%uppercase {_thesound}%" to player
+											broadcast " "
+										else if {_content::%{_line}+{_amnt}%} starts with "}":
+											delete {_cont}
+										else if {_content::%{_line}+{_amnt}%} starts with "  sleep":
+											replace all "  " with "" in {_content::%{_line}+{_amnt}%}
+											set {_sleep::*} to {_content::%{_line}+{_amnt}%} split at "("
+											set {_amount} to {_sleep::2}
+											replace all ")" with "" in {_amount}
+											add 1 to {_Waiting} 
+											send "&e☄ &fWaiting &e%{_amount}% &fseconds..." to player
+											broadcast " "
+											wait "%{_amount}% seconds" parsed as timespan
+										else:
+											{_content::%{_line}+{_amnt}%} starts with "a" or "b" or "c" or "d" or "e" or "f" or "g" or "h" or "i" or "j" or "k" or "l" or "m " or "n" or "o" or "p" or "q" or "r" or "s" or "t" or "u" or "v" or "w" or "x" or "y" or "z"
+											send "&c❌ Music loops cannot contain code." to player
+											broadcast "%{_content::%{_line}+{_amnt}%}%"
+										add 1 to {_amnt}
+							else if loop-value starts with "a" or "b" or "c" or "d" or "e" or "f" or "g" or "h" or "i" or "j" or "k" or "l" or "m " or "n" or "o" or "p" or "q" or "r" or "s" or "t" or "u" or "v" or "w" or "x" or "y" or "z":
+								if loop-value contains "=":
+									set {_regvar} to loop-value
+									set {_regvar::*} to {_regvar} split at " "
+									set {_compare2::*} to {_regvar} split at ""
+									if {_regvar::2} starts with "=":
+										set {_num} to 5
+										set {_qoutenum} to 1
+										set {_loop} to true
+										loop 15 times:
+											{_loop} is set
+											{_compare2::%{_num}%} is set
+											if {_compare2::%{_num}%} is not """": 
+												set {_compare} to "%{_compare}%%{_compare2::%{_num}%}%"
+												add 1 to {_num}		
+											else:
+												if {_qoutenum} is 1:
+													add 1 to {_qoutenum}
+													{_compare2::%{_num}%} is set
+													set {_compare} to "%{_compare}%%{_compare2::%{_num}%}%"
+													add 1 to {_num}
+												else:
+													delete {_loop}
+										replace all "= " with "=" in {_compare}
+										set {_compare::*} to {_compare} split at "="
+										set {_compare} to {_compare::2}
+										set {_varname} to {_regvar::1}
+										replace all """" with "" in {_compare}
+										replace all "<none>" with "" in {_compare}
+										set {%{_varname}%} to {_compare}
+										send "&bRegistered variable &e%{_varname}% &bas &6""&e%{_compare}%&6""" to player
+									else:
+										send "&cCant understand ""%loop-value%"" at line %{_line}%" to player
+							else:
+								if loop-value isn't "" or "}":
+									if loop-value doesn't start with "//":
+										send "&cCant understand ""%loop-value%"" at line %{_line}%" to player
+									else:
+										send "&e☁ &6Comment found at line %{_line}%" to player
+						if {_waiting} is greater than 1:
+							send "&c&oYou may need to open chat to read the parsing results." to player
+						send "&6✔ Done! your code was parsed successfully." to player
+						send "&f&l&m                          " to player
+					else:
+						loop {_content::*}:
+							if loop-value starts with "$":
+								set {_code} to loop-value
+								replace all "$ " with "" in {_code}
+								replace all "_" with " " in {_amount::1}
+								set {CustomParserAccess::%player%} to true
+								make player execute "/grasspy virtual_function %{_code}%" 
+								delete {CustomParserAccess::%player%}
+						send "&6✔ Done! your code was parsed successfully." to player
+						send " " to player
+						send "&f&l&m                          " to player
+			else if arg-1 is "virtual_function":
+				if arg-2 is set:
+					if {CustomParserAccess::%player%} is not set:
+						send "&f&l&m                          " to player
+						send "&eParsing your virtual function."
+					set {_code} to arg-2
+					if {_code} starts with " ":
+						set {_code} to last (length of {_code} - 1) characters of {_code}
+					if {_code} starts with "print(""":
+						set {_print} to {_code}
+						replace all "print(""" with "" in {_print}
+						replace all """)" with "" in {_print}
+						send "&8| &f%colored {_print}%" to player
+					else if {_code} starts with "print(":
+						set {_check::*} to {_code} split at ""
+						if {_check::7} is "f":
+							set {_print} to {_code}
+							replace all "print(f""" with "" in {_print}
+							replace all """)" with "" in {_print}
+							if {_print} contains "{":
+								set {_l} to 0
+								set {_getvar::*} to {_print} split at ""
+								loop {_getvar::*}:
+									add 1 to {_l}
+									if loop-value is "{":
+										if {_getvar::%{_l}+2%} is not "}":
+											set {_var} to "%{_getvar::%{_l}+1%}%%{_getvar::%{_l}+2%}%"
+											if {_getvar::%{_l}+3%} is not "}":
+												set {_var} to "%{_getvar::%{_l}+1%}%%{_getvar::%{_l}+2%}%%{_getvar::%{_l}+3%}%"
+												replace all "{%{_var}%}" with "%{%{_var}%}%" in {_print}
+										else if {_getvar::%{_l}+2%} is "}":
+											set {_var} to "%{_getvar::%{_l}+1%}%"
+											replace all "{%{_var}%}" with "%{%{_var}%}%" in {_print}
+							replace all "<none>" with "&c🜁&r" in {_print}
+							send "&8| &f%colored {_print}%" to player
+						{_check::7} isn't "f"
+						set {_lv} to {_code}
+						replace all "print(" with "" in {_lv}
+						replace all ")" with "" in {_lv}
+						if {_code} contains "+":
+							set {_parser::*} to {_lv} split at "+"
+							set {_result} to {_parser::1} parsed as a number + {_parser::2} parsed as a number
+						else if {_code} contains "-":
+							set {_parser::*} to {_lv} split at "-"
+							set {_result} to {_parser::1} parsed as a number - {_parser::2} parsed as a number
+						else if {_code} contains "*" or "x":
+							set {_parser::*} to {_lv} split at "*" or "x"
+							set {_result} to {_parser::1} parsed as a number * {_parser::2} parsed as a number
+						set {_print} to "%{_print}%"
+						replace all "<none>" with "&c🜁&r" in {_print}
+						send "&8| &f%{_result}%" to player
+					else if {_code} starts with "valueof":
+						set {_thevar} to {_code}
+						set {_thevar::*} to {_thevar} split at ""
+						set {_thevar} to "%{_thevar::9}%%{_thevar::10}%%{_thevar::11}%"
+						if {_thevar::13} is "=":
+							{_thevar::15} is """"
+							set {_check} to 16
+							set {_thevalue} to ""
+							loop 37 times:
+								{_thevar::%{_check}%} is set
+								if {_thevar::%{_check}%} is not """":
+									set {_thevalue} to "%{_thevalue}%%{_thevar::%{_check}%}%"
+									add 1 to {_check}
+							replace all "<none>" with "&c✨" in {_thevalue}
+							if {_thevalue} is {%{_thevar}%}:
+								set {_ogcode} to {_code}
+								replace all "valueof %{_thevar}% = ""%{_thevalue}%""" with "" in {_ogcode}
+								set {CustomParserAccess::%player%} to true
+								make player execute "grasspy virtual_function %{_ogcode}%"
+								delete {CustomParserAccess::%player%}
+							else:
+								send "&c❌ &fThe value of &e%{_thevar}% &fis not &6""&e%{_thevalue}%&6""" to player
+					else if {_code} starts with "sleep":
+						set {_sleep::*} to {_code} split at "("
+						set {_amount} to {_sleep::2}
+						replace all ")" with "" in {_amount}
+						add 1 to {_Waiting} 
+						send "&e☄ &fWaiting &e%{_amount}% &fseconds..." to player
+						wait "%{_amount}% seconds" parsed as timespan
+					else if {_code} starts with "hand":
+						set {_thevar} to {_code}
+						replace all "hand(" and ")" with "" in {_thevar}
+						set {_amount::*} to {_thevar} split at " "
+						replace all "_" with " " in {_amount::1}
+						send "&e⌚ &fGave &e%{_amount::2}%x %uppercase {_amount::1}% &fto PLAYER"
+						give player {_amount::2} parsed as a number of {_amount::1} parsed as an item
+						wait 1 tick
+						if player doesn't have {_amount::1}:
+							send "&cCant understand %uppercase {_amount::1}%" to player
+							loop all blocks:
+								{_solved} is not set
+								set {_n} to loop-block 
+								set {_n} to "%{_n}%"
+								if first character of {_n} is "%first character of {_amount::1}%":
+									set {_solved} to true
+									replace all " " with "_" in {_n}
+									send "&6Did you mean: &f%uppercase {_n}%" to player
+								if {_solved} is not set:
+									loop all items:
+										{_solved} is not set
+										set {_n} to loop-item-2
+										set {_n} to "%{_n}%"
+										if first character of {_n} is "%first character of {_amount::1}%":
+											set {_solved} to true
+											replace all " " with "_" in {_n}
+											send "&6Did you mean: &f%uppercase {_n}%" to player
+						else:
+							send "&e⌚ &fGave &e%{_amount::2}%x %uppercase {_amount::1}% &fto PLAYER"
+					else if {_code} starts with "a" or "b" or "c" or "d" or "e" or "f" or "g" or "h" or "i" or "j" or "k" or "l" or "m " or "n" or "o" or "p" or "q" or "r" or "s" or "t" or "u" or "v" or "w" or "x" or "y" or "z":
+						if {_code} contains "=":
+							set {_regvar} to {_code}
+							set {_regvar::*} to {_regvar} split at " "
+							set {_compare2::*} to {_regvar} split at ""
+							if {_regvar::2} starts with "=":
+								set {_num} to 5
+								set {_qoutenum} to 1
+								set {_loop} to true
+								loop 15 times:
+									{_loop} is set
+									{_compare2::%{_num}%} is set
+									if {_compare2::%{_num}%} is not """": 
+										set {_compare} to "%{_compare}%%{_compare2::%{_num}%}%"
+										add 1 to {_num}		
+									else:
+										if {_qoutenum} is 1:
+											add 1 to {_qoutenum}
+											{_compare2::%{_num}%} is set
+											set {_compare} to "%{_compare}%%{_compare2::%{_num}%}%"
+											add 1 to {_num}
+										else:
+											delete {_loop}
+								replace all "= " with "=" in {_compare}
+								set {_compare::*} to {_compare} split at "="
+								set {_compare} to {_compare::2}
+								set {_varname} to {_regvar::1}
+								replace all """" with "" in {_compare}
+								replace all "<none>" with "" in {_compare}
+								set {%{_varname}%} to {_compare}
+								send "&bRegistered variable &e%{_varname}% &bas &6""&e%{_compare}%&6""" to player
+						else:
+							send "&cCant understand your virtual function."
+					else:
+						send "&cCant understand your virtual function."
+					if {CustomParserAccess::%player%} is not set:
+						send "&6✔ Done! your virtual function was parsed successfully." to player
+						send "&f&l&m                          " to player
