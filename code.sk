@@ -1,3 +1,11 @@
+# THIS CODE IS OWNED BY AGENTCRIPPER:
+# Taking this code & using it is allowed, but please do not take credit for it.
+
+# Plugins:
+# Skript
+# SkUtilities
+
+
 command /grasspy [<text>] [<text>]:
 	permission: op
 	trigger:
