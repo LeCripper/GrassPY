@@ -1,11 +1,3 @@
-# THIS CODE IS OWNED BY AGENTCRIPPER:
-# Taking this code & using it is allowed, but please do not take credit for it.
-
-# Plugins:
-# Skript
-# SkUtilities
-
-
 command /grasspy [<text>] [<text>]:
 	permission: op
 	trigger:
@@ -132,7 +124,7 @@ command /grasspy [<text>] [<text>]:
 								replace all """" with "" in {_code::1}
 								create a gui with virtual chest inventory with {_code::2} parsed as a number rows named "%colored {_code::1}%":
 									set {_slot} to 3
-									loop 27 times:
+									loop 70 times:
 										if {_code::%{_slot}%} is set:
 											make gui slot {_slot}-3 with {_code::%{_slot}%} parsed as an item
 										add 1 to {_slot}
