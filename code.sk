@@ -97,14 +97,14 @@ command /grasspy [<text>] [<text>]:
 											wait "%{_amount}% seconds" parsed as timespan
 									else:
 										send "&c❌ &fThe value of &e%{_thevar}% &fis not &6""&e%{_thevalue}%&6"" &7&o(in line %{_line}%)" to player
-							else if loop-value starts with "hand":
+							else if loop-value starts with "give":
 								set {_thevar} to loop-value
-								replace all "hand(" and ")" with "" in {_thevar}
+								replace all "give(" and ")" with "" in {_thevar}
 								set {_amount::*} to {_thevar} split at " "
-								send "&e⌚ &fGave &e%{_amount::2}%x %uppercase {_amount::1}% &fto PLAYER"
+								replace all "_" with " " in {_amount::1}
 								give player {_amount::2} parsed as a number of {_amount::1} parsed as an item
-								wait 1 tick
-								if player doesn't have {_amount::1}:
+								wait 3 ticks
+								if player doesn't have {_amount::1} parsed as an item:
 									send "&cCant understand %uppercase {_amount::1}% at line %{_line}%" to player
 									loop all blocks:
 										{_solved} is not set
@@ -113,7 +113,7 @@ command /grasspy [<text>] [<text>]:
 										if first character of {_n} is "%first character of {_amount::1}%":
 											set {_solved} to true
 											replace all " " with "_" in {_n}
-											send "&6Did you mean: &f%uppercase {_n}%" to player
+											send "&6&l? &aDid you mean: &f%uppercase {_n}%" to player
 									if {_solved} is not set:
 										loop all items:
 											{_solved} is not set
@@ -125,6 +125,18 @@ command /grasspy [<text>] [<text>]:
 												send "&6Did you mean: &f%uppercase {_n}%" to player
 								else:
 									send "&e⌚ &fGave &e%{_amount::2}%x %uppercase {_amount::1}% &fto PLAYER"
+							else if loop-value starts with "openGui":
+								set {_code} to loop-value
+								replace all "openGui(", ")" with "" in {_code}												
+								set {_code::*} to {_code} split at ","
+								replace all """" with "" in {_code::1}
+								create a gui with virtual chest inventory with {_code::2} parsed as a number rows named "%colored {_code::1}%":
+									set {_slot} to 3
+									loop 27 times:
+										if {_code::%{_slot}%} is set:
+											make gui slot {_slot}-3 with {_code::%{_slot}%} parsed as an item
+										add 1 to {_slot}
+								open last gui to player
 							else if loop-value starts with "sleep":
 								set {_amnt} to 0
 								set {_cont} to true
