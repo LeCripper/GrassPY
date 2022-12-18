@@ -16,6 +16,7 @@ What it can do:
     time.sleep(0.1)
     play "guitar"
   }
-  hand(<ITEM>) // the parser gives a false error for it, but it still works
+  give(<ITEM>) // gives an item
+  openGui("<name>", <rows>, <slot>) // create a gui, name does support color-codes and you can have up to 70 slots depending on the GUI size
   var = "value" // declare a variable, name must be 3 letters long.
   // comment
